@@ -25,7 +25,8 @@
 //#define MCP_CLOCK MCP_16MHZ
 #define MCP_CLOCK MCP_8MHZ
 
-#define ERROR_BIT_INSERT_TIME_US 16
+#define ERROR_BIT_INSERT_TIME_US 2
+#define DOMINANT_INJECT_PIN 5
 
 /*-------------------------------------------------------------*
  *	Configuration		*
@@ -38,7 +39,7 @@ const int CAN_INT_PIN = 2;
 
 MCP_CAN CAN(SPI_CS_PIN);                  // Set CS pin
 
-boolean ConsoleMode = true;     // シリアル
+boolean ConsoleMode = true;     // シリア
 
 /**
  * CANモニタリング用
@@ -210,19 +211,18 @@ int cmd_startDominant(int argc, char** argv)
 {
   shell_println("Start Dominant.");
   disableConsoleMode();
+  enableDominant();
 
   while(1){
     WaitSerialInterrupt();
 
     if (isConsoleMode()){
       break;
-    }    
-
-    enableDominant();
+    }     
   }
 
-  analogWrite(5, 0);
-  analogWrite(6, 0);
+  disableDominant();
+
 }
 
 int cmd_startBusOff(int argc, char** argv){
@@ -336,13 +336,15 @@ void monitorCAN(){
 }
 
 void enableDominant(){
-  analogWrite(5, 178); // 3.5v
-  analogWrite(6, 76);  // 1.5v
+  //analogWrite(5, 178); // 3.5v
+  //analogWrite(6, 76);  // 1.5v
+  digitalWrite(DOMINANT_INJECT_PIN, LOW);
 }
 
 void disableDominant(){
-  analogWrite(5, 0);
-  analogWrite(6, 0);
+  //analogWrite(5, 0);
+  //analogWrite(6, 0);
+  digitalWrite(DOMINANT_INJECT_PIN, HIGH);
 }
 
 void init_can(){
@@ -362,6 +364,8 @@ void setup()
 
   init_can();
 
+  pinMode(DOMINANT_INJECT_PIN, OUTPUT);
+  digitalWrite(DOMINANT_INJECT_PIN, HIGH);
 
   shell_init(shell_reader, shell_writer, 0);
   shell_register(cmd_startCANMonitor, PSTR("monitor"));
